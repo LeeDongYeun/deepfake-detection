@@ -1,7 +1,10 @@
 def create_model(model_name):
     if 'resnet' in model_name:
-        from .resnet import resnet as model
-
+        from .resnet import resnet
+        model = resnet(model_name)
+    if 'vgg' in model_name:
+        from .vgg import vgg
+        model = vgg(model_name)
     return model
 
 

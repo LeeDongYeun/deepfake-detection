@@ -1,6 +1,9 @@
 import keras
-import keras_resnet
-import keras_resnet.models
+from keras.applications.resnet50 import ResNet50
+from keras.applications.resnet101 import ResNet101
+from keras.applications.resnet152 import ResNet152
+# import keras_resnet
+# import keras_resnet.models
 
 
 def resnet(backbone='resnet50', inputs=None, modifier=None, **kwargs):
@@ -22,11 +25,14 @@ def resnet(backbone='resnet50', inputs=None, modifier=None, **kwargs):
 
     # create the resnet backbone
     if backbone == 'resnet50':
-        resnet = keras_resnet.models.ResNet50(inputs, include_top=False, freeze_bn=True)
+        resnet = ResNet50(include_top=False, input_tensor=inputs)
+        # resnet = keras_resnet.models.ResNet50(inputs, include_top=False, freeze_bn=True)
     elif backbone == 'resnet101':
-        resnet = keras_resnet.models.ResNet101(inputs, include_top=False, freeze_bn=True)
+        resnet = ResNet101(include_top=False, input_tensor=inputs)
+        # resnet = keras_resnet.models.ResNet101(inputs, include_top=False, freeze_bn=True)
     elif backbone == 'resnet152':
-        resnet = keras_resnet.models.ResNet152(inputs, include_top=False, freeze_bn=True)
+        resnet = ResNet152(include_top=False, input_tensor=inputs)
+        # resnet = keras_resnet.models.ResNet152(inputs, include_top=False, freeze_bn=True)
     else:
         raise ValueError('Backbone (\'{}\') is invalid.'.format(backbone))
 

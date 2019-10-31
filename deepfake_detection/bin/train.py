@@ -3,8 +3,11 @@ import sys
 import argparse
 import keras
 import tensorflow as tf
-from .. import models
-from ..callbacks import RedirectModel
+
+sys.path.append("..")
+
+import models
+from callbacks import RedirectModel
 
 
 def makedirs(path):
@@ -82,6 +85,56 @@ def create_callbacks(model, validation_generator, args):
     return callbacks
 
 
+def create_generators(args):
+    """ Create generators for training and validation.
+        Args
+            args             : parseargs object containing configuration for generators.
+            preprocess_image : Function that preprocesses an image for the network.
+        """
+    common_args = {
+        'batch_size': args.batch_size,
+        'config': args.config,
+        'image_min_side': args.image_min_side,
+        'image_max_side': args.image_max_side,
+        # 'preprocess_image': preprocess_image,
+    }
+
+    # create random transform generator for augmenting training data
+    if args.random_transform:
+        transform_generator = random_transform_generator(
+            min_rotation=-0.1,
+            max_rotation=0.1,
+            min_translation=(-0.1, -0.1),
+            max_translation=(0.1, 0.1),
+            min_shear=-0.1,
+            max_shear=0.1,
+            min_scaling=(0.9, 0.9),
+            max_scaling=(1.1, 1.1),
+            flip_x_chance=0.5,
+            flip_y_chance=0.5,
+        )
+    else:
+        transform_generator = random_transform_generator(flip_x_chance=0.5)
+
+    if args.dataset_type == 'csv':
+        train_generator = CSVGenerator(
+            args.annotations,
+            args.classes,
+            transform_generator=transform_generator,
+            **common_args
+        )
+        validation_generator = CSVGenerator(
+            args.annotations,
+            args.classes,
+            shuffle_groups=False,
+            **common_args
+        )
+    else:
+        raise ValueError('Invalid data type received: {}'.format(args.dataset_type))
+
+    return train_generator, validation_generator
+
+
 def parse_args(args):
     """ Parse the arguments.
     """
@@ -92,9 +145,30 @@ def parse_args(args):
 
     csv_parser = subparsers.add_parser('csv')
     csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for training.')
+    csv_parser.add_argument('val-annotations', help='Path to CSV file containing annotations for validation (optional).')
     csv_parser.add_argument('classes', help='Path to a CSV file containing class label mapping.')
-    csv_parser.add_argument('--val-annotations', help='Path to CSV file containing annotations for validation (optional).')
 
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--snapshot', help='Resume training from a snapshot.')
+    group.add_argument('--imagenet-weights', help='Initialize the model with pretrained imagenet weights. This is the default behaviour.', action='store_const', const=True, default=True)
+    group.add_argument('--weights', help='Initialize the model with weights from a file.')
+
+    parser.add_argument('--model', help='Backbone model used by retinanet.', default='resnet50', type=str)
+    parser.add_argument('--batch-size', help='Size of the batches.', default=3, type=int)
+    parser.add_argument('--gpu', help='Id of the GPU to use (as reported by nvidia-smi).')
+    parser.add_argument('--multi-gpu', help='Number of GPUs to use for parallel processing.', type=int, default=0)
+    parser.add_argument('--multi-gpu-force', help='Extra flag needed to enable (experimental) multi-gpu support.', action='store_true')
+    parser.add_argument('--epochs', help='Number of epochs to train.', type=int, default=50)
+    parser.add_argument('--steps', help='Number of steps per epoch.', type=int, default=10000)
+    parser.add_argument('--lr', help='Learning rate.', type=float, default=1e-4)
+    parser.add_argument('--snapshot-path', help='Path to store snapshots of models during training (defaults to \'./snapshots\')', default='./snapshots')
+    parser.add_argument('--tensorboard-dir', help='Log directory for Tensorboard output', default='./logs')
+    parser.add_argument('--random-transform', help='Randomly transform image and annotations.', action='store_true')
+    parser.add_argument('--image-min-side', help='Rescale the image so the smallest side is min_side.', type=int, default=320)
+    parser.add_argument('--image-max-side', help='Rescale the image if the largest side is larger than max_side.', type=int, default=800)
+    parser.add_argument('--config', help='Path to a configuration parameters .ini file.')
+
+    return parser.parse_args(args)
 
 
 def main(args=None):
@@ -113,7 +187,7 @@ def main(args=None):
     #     args.config = read_config_file(args.config)
 
     # create the generators
-    # train_generator, validation_generator = create_generators(args, backbone.preprocess_image)
+    # train_generator, validation_generator = create_generators(args)
 
     if args.snapshot is not None:
         print('Loading model, this may take a second...')
@@ -121,13 +195,18 @@ def main(args=None):
     else:
         print('Creating model, this may take a second...')
         model = models.create_model(args.model)
-        model.compile(optimizer=keras.optimizers.adam(lr=args.lr, clipnorm=0.001))
+        model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.adam(lr=args.lr, clipnorm=0.001))
 
     print(model.summary())
 
     # create the callbacks
     callbacks = create_callbacks(model, args)
 
-    if not args.compute_val_loss:
-        validation_generator = None
+    return model.fit_generator(
+        generator=train_generator,
 
+    )
+
+
+if __name__ == '__main__':
+    main()
