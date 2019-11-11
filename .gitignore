@@ -5,3 +5,8 @@
 *.xml
 .idea/vcs.xml
 *.pyc
+
+/presentation/*
+*.csv
+*.zip
+.vscode
