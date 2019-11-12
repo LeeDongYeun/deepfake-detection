@@ -8,6 +8,7 @@ sys.path.append("..")
 
 import models
 from callbacks import RedirectModel
+from preprocessing import DataGenerator
 
 
 def makedirs(path):
@@ -42,7 +43,7 @@ def model_with_weights(model, weights, skip_mismatch):
     return model
 
 
-def create_callbacks(model, validation_generator, args):
+def create_callbacks(model, args):
     """ Creates the callbacks to use during training.
         Args
             model: The base model.
@@ -63,18 +64,18 @@ def create_callbacks(model, validation_generator, args):
         callbacks.append(tensorboard_callback)
 
     # save the model
-    if args.snapshots:
-        # ensure directory created first; otherwise h5py will error after epoch.
-        makedirs(args.snapshot_path)
-        checkpoint = keras.callbacks.ModelCheckpoint(
-            os.path.join(
-                args.snapshot_path,
-                '{backbone}_{dataset_type}_{{epoch:02d}}.h5'.format(backbone=args.backbone, dataset_type=args.dataset_type)
-            ),
-            verbose=1
-        )
-        checkpoint = RedirectModel(checkpoint, model)
-        callbacks.append(checkpoint)
+    # if args.snapshots:
+    #     # ensure directory created first; otherwise h5py will error after epoch.
+    #     makedirs(args.snapshot_path)
+    #     checkpoint = keras.callbacks.ModelCheckpoint(
+    #         os.path.join(
+    #             args.snapshot_path,
+    #             '{backbone}_{dataset_type}_{{epoch:02d}}.h5'.format(backbone=args.backbone, dataset_type=args.dataset_type)
+    #         ),
+    #         verbose=1
+    #     )
+    #     checkpoint = RedirectModel(checkpoint, model)
+    #     callbacks.append(checkpoint)
 
     callbacks.append(keras.callbacks.ReduceLROnPlateau(
         monitor='loss',
@@ -100,39 +101,40 @@ def create_generators(args):
     }
 
     # create random transform generator for augmenting training data
-    if args.random_transform:
-        transform_generator = random_transform_generator(
-            min_rotation=-0.1,
-            max_rotation=0.1,
-            min_translation=(-0.1, -0.1),
-            max_translation=(0.1, 0.1),
-            min_shear=-0.1,
-            max_shear=0.1,
-            min_scaling=(0.9, 0.9),
-            max_scaling=(1.1, 1.1),
-            flip_x_chance=0.5,
-            flip_y_chance=0.5,
-        )
-    else:
-        transform_generator = random_transform_generator(flip_x_chance=0.5)
+    # if args.random_transform:
+    #     transform_generator = random_transform_generator(
+    #         min_rotation=-0.1,
+    #         max_rotation=0.1,
+    #         min_translation=(-0.1, -0.1),
+    #         max_translation=(0.1, 0.1),
+    #         min_shear=-0.1,
+    #         max_shear=0.1,
+    #         min_scaling=(0.9, 0.9),
+    #         max_scaling=(1.1, 1.1),
+    #         flip_x_chance=0.5,
+    #         flip_y_chance=0.5,
+    #     )
+    # else:
+    #     transform_generator = random_transform_generator(flip_x_chance=0.5)
 
     if args.dataset_type == 'csv':
-        train_generator = CSVGenerator(
+        train_generator = DataGenerator(
             args.annotations,
-            args.classes,
-            transform_generator=transform_generator,
+            # args.classes,
+            # transform_generator=transform_generator,
             **common_args
         )
-        validation_generator = CSVGenerator(
-            args.annotations,
-            args.classes,
-            shuffle_groups=False,
-            **common_args
-        )
+        # validation_generator = generator(
+        #     args.annotations,
+        #     args.classes,
+        #     shuffle_groups=False,
+        #     **common_args
+        # )
     else:
         raise ValueError('Invalid data type received: {}'.format(args.dataset_type))
 
-    return train_generator, validation_generator
+    # return train_generator, validation_generator
+    return train_generator
 
 
 def parse_args(args):
@@ -161,9 +163,9 @@ def parse_args(args):
     parser.add_argument('--epochs', help='Number of epochs to train.', type=int, default=50)
     parser.add_argument('--steps', help='Number of steps per epoch.', type=int, default=10000)
     parser.add_argument('--lr', help='Learning rate.', type=float, default=1e-4)
-    parser.add_argument('--snapshot-path', help='Path to store snapshots of models during training (defaults to \'./snapshots\')', default='./snapshots')
+    # parser.add_argument('--snapshot-path', help='Path to store snapshots of models during training (defaults to \'./snapshots\')', default='./snapshots')
     parser.add_argument('--tensorboard-dir', help='Log directory for Tensorboard output', default='./logs')
-    parser.add_argument('--random-transform', help='Randomly transform image and annotations.', action='store_true')
+    # parser.add_argument('--random-transform', help='Randomly transform image and annotations.', action='store_true')
     parser.add_argument('--image-min-side', help='Rescale the image so the smallest side is min_side.', type=int, default=320)
     parser.add_argument('--image-max-side', help='Rescale the image if the largest side is larger than max_side.', type=int, default=800)
     parser.add_argument('--config', help='Path to a configuration parameters .ini file.')
@@ -188,6 +190,7 @@ def main(args=None):
 
     # create the generators
     # train_generator, validation_generator = create_generators(args)
+    train_generator = create_generators(args)
 
     if args.snapshot is not None:
         print('Loading model, this may take a second...')
@@ -204,7 +207,10 @@ def main(args=None):
 
     return model.fit_generator(
         generator=train_generator,
-
+        steps_per_epoch=args.steps,
+        epochs=args.epochs,
+        verbose=1,
+        callbacks=callbacks,
     )
 
 
