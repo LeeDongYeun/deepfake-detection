@@ -1,7 +1,7 @@
 import keras
 from keras.applications.resnet50 import ResNet50
-from keras.applications.resnet101 import ResNet101
-from keras.applications.resnet152 import ResNet152
+# from keras.applications.resnet101 import ResNet101
+# from keras.applications.resnet152 import ResNet152
 # import keras_resnet
 # import keras_resnet.models
 

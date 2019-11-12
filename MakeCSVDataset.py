@@ -6,21 +6,19 @@ import argparse
 
 
 def main(config):
-    parents = glob.glob(os.path.join(config.dir, "*"))
+    parents = glob.glob(config.dir + "/*")
     
     train = []
     val = []
     
-    for p in parents:
-        child = glob.glob(os.path.join(p,"*"))
-        random.shuffle(child)
-        thresh = int(len(child)*config.ratio)
-        for i, c in enumerate(child):
-            if i<thresh:
-                train.append([c,1])
-            else:
-                val.append([c,1])
-                
+    random.shuffle(parents)
+    thresh = int(len(parents)*config.ratio)
+    for i, p in enumerate(parents):
+        if i<thresh:
+            train.append([p,1])
+        else:
+            val.append([p,1])
+    
     train = pd.DataFrame(train)
     val = pd.DataFrame(val)
     train = train.reset_index(drop=True)
