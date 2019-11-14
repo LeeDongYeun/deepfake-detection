@@ -3,7 +3,7 @@ import argparse
 
 # getting data from the csv file which is form of "image link" "real or not"
 import csv
-from keras.preprocessing.image import load_img, img_to_array, array_to_img
+from keras.preprocessing.image import load_img, img_to_array, array_to_img, save_img
 import random
 
 # keras data generator
@@ -31,33 +31,25 @@ class DataGenerator(keras.utils.Sequence):
     def __getitem__(self, index):
         'Generate one batch of data'
         X = self.data[index*self.batch_size:(index+1)*self.batch_size]
-        varied_X = list(map(lambda x: x if random.random() > 0.5 else None, X))
-        print(varied_X)
-        varied_indexes = list(
-            map(lambda x: 1 if hasattr(x, 'shape') else 0, varied_X))
-        varied_X = list(filter(lambda x: hasattr(x, 'shape'), varied_X))
-        varied_X = self._apply_fn(varied_X)
-        varied_X = list(map(lambda x, y, z: y if z else x,
-                            X, varied_X, varied_indexes))
         Y = self.label[index*self.batch_size:(index+1)*self.batch_size]
-        varied_Y = list(map(lambda x, y: y if x ==
-                            0 else 0, varied_indexes, Y))
+        varied_X = []
+        varied_Y = []
+        for i, x in enumerate(X):
+            rand = random.random()
+            if rand > 0.5:
+                varied_X.append(x)
+                varied_Y.append(Y[i])
+            else:
+                varied_X.append(self._transform_function(x))
+                varied_Y.append(1)
 
         return varied_X, varied_Y
-        # return X, Y
 
     def on_epoch_end(self):
         self.indexes = np.arange(len(self.list_IDs))
         if self.shuffle:
             np.random.shuffle(self.indexes)
         np.random.shuffle(self.indexes)
-
-    def _apply_fn(self, array_list):
-        array_list = list(
-            map(lambda x: self._transform_function(x), array_list))
-        array_list = list(map(lambda x: img_to_array(x), array_list))
-
-        return array_list
 
     def _convert_img(self, path_list):
         data = []
@@ -97,8 +89,8 @@ class DataGenerator(keras.utils.Sequence):
         alimg = cv2.resize(cropimg, dsize=(0, 0), fx=fx,
                            fy=fy, interpolation=cv2.INTER_LINEAR)
         temp = cv2.GaussianBlur(alimg, (5, 5), 0)  # 얼굴부분 추출해서 Gaussian Blur
-        blur = cv2.resize(temp, dsize=(0, 0), fx=1/fx, fy=1 /
-                          fy, interpolation=cv2.INTER_LINEAR)
+        blur = cv2.resize(temp, dsize=(0, 0), fx=1/fx, fy=1/fy,
+                          interpolation=cv2.INTER_LINEAR)
 
         for i in range(y, y+h):
             for j in range(x, x+w):
@@ -125,9 +117,6 @@ if __name__ == "__main__":
 
     training_generator = DataGenerator(args.csv_path, True, **d)
 
-    print(training_generator)
-
     a = training_generator
     x, y = a.__getitem__(1)
-    print(x[0].shape)
-    cv2.imwrite(array_to_img(x[0]), "good.png")
+    save_img('good.jpg', array_to_img(x[0]))
