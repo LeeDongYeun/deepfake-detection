@@ -10,8 +10,9 @@ import random
 import numpy as np
 import keras
 
-#Blurring process
+# Blurring process
 import cv2
+
 
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
@@ -36,11 +37,14 @@ class DataGenerator(keras.utils.Sequence):
             map(lambda x: 1 if hasattr(x, 'shape') else 0, varied_X))
         varied_X = list(filter(lambda x: hasattr(x, 'shape'), varied_X))
         varied_X = self._apply_fn(varied_X)
-        varied_X = list(map(lambda x, y, z: y if z else x, X, varied_X, varied_indexes))
+        varied_X = list(map(lambda x, y, z: y if z else x,
+                            X, varied_X, varied_indexes))
         Y = self.label[index*self.batch_size:(index+1)*self.batch_size]
-        varied_Y = list(map(lambda x, y: y if x == 0 else 0, varied_indexes, Y))
+        varied_Y = list(map(lambda x, y: y if x ==
+                            0 else 0, varied_indexes, Y))
 
         return varied_X, varied_Y
+        # return X, Y
 
     def on_epoch_end(self):
         self.indexes = np.arange(len(self.list_IDs))
@@ -49,8 +53,8 @@ class DataGenerator(keras.utils.Sequence):
         np.random.shuffle(self.indexes)
 
     def _apply_fn(self, array_list):
-        array_list = list(map(lambda x: array_to_img(x), array_list))
-        array_list = list(map(lambda x: _transform_function(x), array_list))
+        array_list = list(
+            map(lambda x: self._transform_function(x), array_list))
         array_list = list(map(lambda x: img_to_array(x), array_list))
 
         return array_list
@@ -72,30 +76,36 @@ class DataGenerator(keras.utils.Sequence):
                 p, r = row[0].split(",")
                 data.append(p)
                 label.append(r)
-        data = self.convert_img(data)
+        data = self._convert_img(data)
 
         return data, label
 
     def _transform_function(self, img):
-        face_cascade = cv2.CascadeClassifier('haarcascade_frontface.xml')  #data provided from open cv
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.3, 5) #detecting face from received img
-        
-        for (x,y,w,h) in faces:
+        face_cascade = cv2.CascadeClassifier(
+            'haarcascade_frontface.xml')  # data provided from open cv
+        gray = cv2.cvtColor(np.uint8(img), cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(
+            gray, 1.3, 5)  # detecting face from received img
+
+        for (x, y, w, h) in faces:
             cropimg = img[y:y+h, x:x+w]
-        
+
         alsize = random.randrange(1, 10)
         fx = 0.6 + 0.1*alsize
         fy = 0.6 + 0.1*alsize
 
-        alimg = cv2.resize(cropimg, dsize=(0, 0), fx=fx, fy=fy, interpolation=cv2.INTER_LINEAR)
-        temp = cv2.GaussianBlur(alimg,(5,5),0)  #얼굴부분 추출해서 Gaussian Blur
-        blur = cv2.resize(temp, dsize=(0, 0), fx=1/fx, fy=1/fy, interpolation=cv2.INTER_LINEAR)
+        alimg = cv2.resize(cropimg, dsize=(0, 0), fx=fx,
+                           fy=fy, interpolation=cv2.INTER_LINEAR)
+        temp = cv2.GaussianBlur(alimg, (5, 5), 0)  # 얼굴부분 추출해서 Gaussian Blur
+        blur = cv2.resize(temp, dsize=(0, 0), fx=1/fx, fy=1 /
+                          fy, interpolation=cv2.INTER_LINEAR)
 
         for i in range(y, y+h):
             for j in range(x, x+w):
                 for k in range(3):
                     img[i, j, k] = blur[i-y, j-x, k]
+
+        return img
 
 
 if __name__ == "__main__":
@@ -116,3 +126,8 @@ if __name__ == "__main__":
     training_generator = DataGenerator(args.csv_path, True, **d)
 
     print(training_generator)
+
+    a = training_generator
+    x, y = a.__getitem__(1)
+    print(x[0].shape)
+    cv2.imwrite(array_to_img(x[0]), "good.png")
