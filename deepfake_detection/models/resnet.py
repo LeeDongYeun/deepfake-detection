@@ -1,9 +1,15 @@
 import keras
 from keras.applications.resnet50 import ResNet50
+from keras.layers import Dense, Conv2D, BatchNormalization, Activation
+from keras.layers import AveragePooling2D, Input, Flatten
+from keras.models import Model
+
 # from keras.applications.resnet101 import ResNet101
 # from keras.applications.resnet152 import ResNet152
 # import keras_resnet
 # import keras_resnet.models
+
+
 
 
 def resnet(backbone='resnet50', inputs=None, modifier=None, **kwargs):
@@ -19,13 +25,14 @@ def resnet(backbone='resnet50', inputs=None, modifier=None, **kwargs):
     # choose default input
     if inputs is None:
         if keras.backend.image_data_format() == 'channels_first':
-            inputs = keras.layers.Input(shape=(3, None, None))
+            inputs = keras.layers.Input(shape=(3, 218, 178))
         else:
-            inputs = keras.layers.Input(shape=(None, None, 3))
+            inputs = keras.layers.Input(shape=(218, 178, 3))
 
     # create the resnet backbone
     if backbone == 'resnet50':
         resnet = ResNet50(include_top=False, input_tensor=inputs)
+        print(resnet.output)
         # resnet = keras_resnet.models.ResNet50(inputs, include_top=False, freeze_bn=True)
     elif backbone == 'resnet101':
         resnet = ResNet101(include_top=False, input_tensor=inputs)
@@ -39,6 +46,13 @@ def resnet(backbone='resnet50', inputs=None, modifier=None, **kwargs):
     # invoke modifier if given
     if modifier:
         resnet = modifier(resnet)
+    x = resnet.output
+    print(x.shape)
+    resnet = AveragePooling2D(pool_size=8)(x)
+    resnet = Flatten()(resnet)
+
+    outputs = Dense(1, activation='softmax', kernel_initializer='he_normal')(resnet)
+    model = Model(inputs=inputs, outputs=outputs)
 
     # create the full model
-    return resnet
+    return model

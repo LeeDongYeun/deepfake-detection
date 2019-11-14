@@ -122,6 +122,7 @@ def create_generators(args):
             args.annotations,
             # args.classes,
             # transform_generator=transform_generator,
+            shuffle=True,
             **common_args
         )
         # validation_generator = generator(
