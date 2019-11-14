@@ -74,7 +74,7 @@ class DataGenerator(keras.utils.Sequence):
 
     def _transform_function(self, img):
         face_cascade = cv2.CascadeClassifier(
-            'haarcascade_frontface.xml')  # data provided from open cv
+            os.getcwd() + '../xml/haarcascade_frontface.xml')  # data provided from open cv
         gray = cv2.cvtColor(np.uint8(img), cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(
             gray, 1.3, 5)  # detecting face from received img
@@ -119,4 +119,7 @@ if __name__ == "__main__":
 
     a = training_generator
     x, y = a.__getitem__(1)
-    save_img('good.jpg', array_to_img(x[0]))
+    save_img('1.jpg', array_to_img(x[0]))
+    save_img('2.jpg', array_to_img(x[1]))
+    save_img('3.jpg', array_to_img(x[2]))
+    save_img('4.jpg', array_to_img(x[3]))

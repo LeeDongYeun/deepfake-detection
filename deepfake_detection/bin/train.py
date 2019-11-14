@@ -1,3 +1,6 @@
+from preprocessing import DataGenerator
+from callbacks import RedirectModel
+import models
 import os
 import sys
 import argparse
@@ -5,10 +8,6 @@ import keras
 import tensorflow as tf
 
 sys.path.append("..")
-
-import models
-from callbacks import RedirectModel
-from preprocessing import DataGenerator
 
 
 def makedirs(path):
@@ -120,9 +119,10 @@ def create_generators(args):
     if args.dataset_type == 'csv':
         train_generator = DataGenerator(
             args.annotations,
+            shuffle=True
             # args.classes,
             # transform_generator=transform_generator,
-            **common_args
+            ** common_args
         )
         # validation_generator = generator(
         #     args.annotations,
@@ -131,7 +131,8 @@ def create_generators(args):
         #     **common_args
         # )
     else:
-        raise ValueError('Invalid data type received: {}'.format(args.dataset_type))
+        raise ValueError(
+            'Invalid data type received: {}'.format(args.dataset_type))
 
     # return train_generator, validation_generator
     return train_generator
@@ -141,34 +142,53 @@ def parse_args(args):
     """ Parse the arguments.
     """
 
-    parser = argparse.ArgumentParser(description='Simple training script for training a RetinaNet network.')
-    subparsers = parser.add_subparsers(help='Arguments for specific dataset types.', dest='dataset_type')
+    parser = argparse.ArgumentParser(
+        description='Simple training script for training a RetinaNet network.')
+    subparsers = parser.add_subparsers(
+        help='Arguments for specific dataset types.', dest='dataset_type')
     subparsers.required = True
 
     csv_parser = subparsers.add_parser('csv')
-    csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for training.')
-    csv_parser.add_argument('val-annotations', help='Path to CSV file containing annotations for validation (optional).')
-    csv_parser.add_argument('classes', help='Path to a CSV file containing class label mapping.')
+    csv_parser.add_argument(
+        'annotations', help='Path to CSV file containing annotations for training.')
+    csv_parser.add_argument(
+        'val-annotations', help='Path to CSV file containing annotations for validation (optional).')
+    csv_parser.add_argument(
+        'classes', help='Path to a CSV file containing class label mapping.')
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--snapshot', help='Resume training from a snapshot.')
-    group.add_argument('--imagenet-weights', help='Initialize the model with pretrained imagenet weights. This is the default behaviour.', action='store_const', const=True, default=True)
-    group.add_argument('--weights', help='Initialize the model with weights from a file.')
+    group.add_argument('--imagenet-weights', help='Initialize the model with pretrained imagenet weights. This is the default behaviour.',
+                       action='store_const', const=True, default=True)
+    group.add_argument(
+        '--weights', help='Initialize the model with weights from a file.')
 
-    parser.add_argument('--model', help='Backbone model used by retinanet.', default='resnet50', type=str)
-    parser.add_argument('--batch-size', help='Size of the batches.', default=3, type=int)
-    parser.add_argument('--gpu', help='Id of the GPU to use (as reported by nvidia-smi).')
-    parser.add_argument('--multi-gpu', help='Number of GPUs to use for parallel processing.', type=int, default=0)
-    parser.add_argument('--multi-gpu-force', help='Extra flag needed to enable (experimental) multi-gpu support.', action='store_true')
-    parser.add_argument('--epochs', help='Number of epochs to train.', type=int, default=50)
-    parser.add_argument('--steps', help='Number of steps per epoch.', type=int, default=10000)
-    parser.add_argument('--lr', help='Learning rate.', type=float, default=1e-4)
+    parser.add_argument(
+        '--model', help='Backbone model used by retinanet.', default='resnet50', type=str)
+    parser.add_argument(
+        '--batch-size', help='Size of the batches.', default=3, type=int)
+    parser.add_argument(
+        '--gpu', help='Id of the GPU to use (as reported by nvidia-smi).')
+    parser.add_argument(
+        '--multi-gpu', help='Number of GPUs to use for parallel processing.', type=int, default=0)
+    parser.add_argument(
+        '--multi-gpu-force', help='Extra flag needed to enable (experimental) multi-gpu support.', action='store_true')
+    parser.add_argument(
+        '--epochs', help='Number of epochs to train.', type=int, default=50)
+    parser.add_argument(
+        '--steps', help='Number of steps per epoch.', type=int, default=10000)
+    parser.add_argument('--lr', help='Learning rate.',
+                        type=float, default=1e-4)
     # parser.add_argument('--snapshot-path', help='Path to store snapshots of models during training (defaults to \'./snapshots\')', default='./snapshots')
-    parser.add_argument('--tensorboard-dir', help='Log directory for Tensorboard output', default='./logs')
+    parser.add_argument(
+        '--tensorboard-dir', help='Log directory for Tensorboard output', default='./logs')
     # parser.add_argument('--random-transform', help='Randomly transform image and annotations.', action='store_true')
-    parser.add_argument('--image-min-side', help='Rescale the image so the smallest side is min_side.', type=int, default=320)
-    parser.add_argument('--image-max-side', help='Rescale the image if the largest side is larger than max_side.', type=int, default=800)
-    parser.add_argument('--config', help='Path to a configuration parameters .ini file.')
+    parser.add_argument(
+        '--image-min-side', help='Rescale the image so the smallest side is min_side.', type=int, default=320)
+    parser.add_argument(
+        '--image-max-side', help='Rescale the image if the largest side is larger than max_side.', type=int, default=800)
+    parser.add_argument(
+        '--config', help='Path to a configuration parameters .ini file.')
 
     return parser.parse_args(args)
 
@@ -198,7 +218,8 @@ def main(args=None):
     else:
         print('Creating model, this may take a second...')
         model = models.create_model(args.model)
-        model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.adam(lr=args.lr, clipnorm=0.001))
+        model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.adam(
+            lr=args.lr, clipnorm=0.001))
 
     print(model.summary())
 
