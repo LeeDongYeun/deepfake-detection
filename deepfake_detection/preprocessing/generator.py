@@ -1,7 +1,5 @@
 import os
 import argparse
-import multiprocessing
-from multiprocessing import Pool
 
 # getting data from the csv file which is form of "image link" "real or not"
 import csv
@@ -12,17 +10,18 @@ import random
 import numpy as np
 import keras
 
+#Blurring process
+import cv2
 
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
 
-    def __init__(self, csv_path, **kwargs):
+    def __init__(self, csv_path, shuffle, **kwargs):
         super(DataGenerator, self).__init__()
-        # self.data = data
-        # self.label = label
+        self.shuffle = shuffle
         self.batch_size = kwargs['batch_size']
         self.csv_path = csv_path
-        _, __, self.data, self.label = self.read_csv(self.csv_path)
+        self.data, self.label = self._read_csv(self.csv_path)
 
     def __len__(self):
         'Denotes the number of batches per epoch'
@@ -36,91 +35,84 @@ class DataGenerator(keras.utils.Sequence):
         varied_indexes = list(
             map(lambda x: 1 if hasattr(x, 'shape') else 0, varied_X))
         varied_X = list(filter(lambda x: hasattr(x, 'shape'), varied_X))
-        # varied_X = self._apply_fn(varied_X)
-        # varied_X = list(map(lambda x, y, z: y if z else x, X, varied_X, varied_indexes))
+        varied_X = self._apply_fn(varied_X)
+        varied_X = list(map(lambda x, y, z: y if z else x, X, varied_X, varied_indexes))
         Y = self.label[index*self.batch_size:(index+1)*self.batch_size]
-        # varied_Y = list(map(lambda x, y: y if x == 0 else 0, varied_indexes, Y))
-        # return varied_X, varied_Y
-        return X, Y
+        varied_Y = list(map(lambda x, y: y if x == 0 else 0, varied_indexes, Y))
+
+        return varied_X, varied_Y
 
     def on_epoch_end(self):
         self.indexes = np.arange(len(self.list_IDs))
-        # if self.shuffle == True:
-        #     np.random.shuffle(self.indexes)
+        if self.shuffle:
+            np.random.shuffle(self.indexes)
         np.random.shuffle(self.indexes)
 
     def _apply_fn(self, array_list):
         array_list = list(map(lambda x: array_to_img(x), array_list))
-        array_list = list(map(lambda x: transform_function(x), array_list))
+        array_list = list(map(lambda x: _transform_function(x), array_list))
         array_list = list(map(lambda x: img_to_array(x), array_list))
 
         return array_list
 
-    def convert_img_fn(self, path):
-        img = load_img(path)
-        img_array = img_to_array(img)
-
-        return img_array
-
-
-    def convert_img_mp(self, cpu_ccount, path_list):
-        pool = Pool(processes=cpu_ccount)
-        path_list = list(map(lambda x: '../.'+x, path_list))
-        r = pool.map_async(self.convert_img_fn, path_list)
-        r.wait()
-        pool.close()
-        pool.join()
-        data = r.get()
+    def _convert_img(self, path_list):
+        data = []
+        for path in path_list:
+            img = load_img(path)
+            d = img_to_array(img)
+            data.append(d)
 
         return data
 
-
-    def convert_img(self, path_list):
-        ncpus = multiprocessing.cpu_count()
-        if ncpus > 1:
-            data = self.convert_img_mp(ncpus, path_list)
-        else:
-            data = []
-            for path in path_list:
-                d = self.convert_img_fn(path)
-                data.append(d)
-
-        return data
-
-
-    def read_csv(self, path):
-        data, real = [], []
+    def _read_csv(self, path):
+        data, label = [], []
         with open(path, newline='') as f:
-            r = list(csv.reader(f, delimiter=' ', quotechar='|'))[:21]
-            for row in r[1:]:
+            reading = list(csv.reader(f, delimiter=' ', quotechar='|'))
+            for row in reading:
                 p, r = row[0].split(",")
                 data.append(p)
-                real.append(r)
-
+                label.append(r)
         data = self.convert_img(data)
 
-        l = list(range(len(data)))
-        ids = list(map(lambda x: 'id-'+str(x), l))
-        random.shuffle(ids)
-        nt = int(len(data) * 0.8)
-        nv = int(len(data) * 0.2)
-        train = ids[:nt]
-        val = ids[nt:nt+nv]
-        test = ids[nt+nv:]
-        trainp, valp, testp, traind, vald, testd = [], [], [], [], [], []
-        for idx, d in enumerate(data):
-            if 'id-'+str(idx) in train:
-                trainp.append(d)
-                traind.append(real[idx])
-            elif 'id-'+str(idx) in val:
-                valp.append(d)
-                vald.append(real[idx])
-            else:
-                testp.append(d)
-                testd.append(real[idx])
+        return data, label
 
-        pd = {'train': train, 'validation': val, 'test': test}
-        dd = {'train': trainp, 'validation': valp, 'test': testp}
-        ld = {'train': traind, 'validation': vald, 'test': testd}
+    def _transform_function(self, img):
+        face_cascade = cv2.CascadeClassifier('haarcascade_frontface.xml')  #data provided from open cv
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5) #detecting face from received img
+        
+        for (x,y,w,h) in faces:
+            cropimg = img[y:y+h, x:x+w]
+        
+        alsize = random.randrange(1, 10)
+        fx = 0.6 + 0.1*alsize
+        fy = 0.6 + 0.1*alsize
 
-        return d, pd, dd, ld
+        alimg = cv2.resize(cropimg, dsize=(0, 0), fx=fx, fy=fy, interpolation=cv2.INTER_LINEAR)
+        temp = cv2.GaussianBlur(alimg,(5,5),0)  #얼굴부분 추출해서 Gaussian Blur
+        blur = cv2.resize(temp, dsize=(0, 0), fx=1/fx, fy=1/fy, interpolation=cv2.INTER_LINEAR)
+
+        for i in range(y, y+h):
+            for j in range(x, x+w):
+                for k in range(3):
+                    img[i, j, k] = blur[i-y, j-x, k]
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--csv_path',
+                        help='path of the csv file',
+                        type=str)
+    parser.add_argument('--batch_size',
+                        help='number of batch',
+                        type=int,
+                        default=4)
+    args = parser.parse_args()
+
+    def depath(path): return os.path.realpath(os.path.expanduser(path))
+    csv_path = depath(args.csv_path)
+    d = {'batch_size': args.batch_size}
+
+    training_generator = DataGenerator(args.csv_path, True, **d)
+
+    print(training_generator)
