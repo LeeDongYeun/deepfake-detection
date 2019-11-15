@@ -86,7 +86,9 @@ class DataGenerator(keras.utils.Sequence):
         gray = cv2.cvtColor(np.uint8(img), cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(
             gray, 1.3, 5)  # detecting face from received img
-
+        
+        fail = 0
+        
         print(type(faces))
         if hasattr(faces, 'shape'):
             for (x, y, w, h) in faces:
@@ -105,7 +107,12 @@ class DataGenerator(keras.utils.Sequence):
             for i in range(y, y+h):
                 for j in range(x, x+w):
                     for k in range(3):
-                        img[i, j, k] = blur[i-y, j-x, k]
+                        try:
+                            img[i, j, k] = blur[i-y, j-x, k]
+                        except:
+                            print("fail")
+                            fail += 1
+                            continue
 
         return img
 
