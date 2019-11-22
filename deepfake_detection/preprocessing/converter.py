@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 
 def GenerateFakeImages(img):
     face_cascade = cv2.CascadeClassifier(
-        'haarcascade_frontface.xml')  # opencv에서 제공하는 얼굴인식 data
+        os.getcwd()+'/haarcascade_frontface.xml')  # opencv에서 제공하는 얼굴인식 data
 
     # img = cv2.imread('ironman.jpg')
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

@@ -36,6 +36,7 @@ class DataGenerator(keras.utils.Sequence):
         varied_X = []
         varied_Y = []
         for i, x in enumerate(X):
+            
             rand = random.random()
             if rand > 0.5:
                 varied_X.append(x)
@@ -48,7 +49,7 @@ class DataGenerator(keras.utils.Sequence):
                     varied_X.append(self._transform_function(x))
                     varied_Y.append(1)
 
-        return varied_X, varied_Y
+        return np.array(varied_X), np.array(varied_Y)
 
     def on_epoch_end(self):
         self.indexes = np.arange(len(self.data))
@@ -61,6 +62,8 @@ class DataGenerator(keras.utils.Sequence):
         for path in path_list:
             img = load_img(path)
             d = img_to_array(img)
+            d = cv2.resize(d, dsize=(256,256))
+
             data.append(d)
 
         return data
@@ -78,11 +81,14 @@ class DataGenerator(keras.utils.Sequence):
 
     def _transform_function(self, img):
         face_cascade = cv2.CascadeClassifier(
-            os.getcwd() + '/../xml/haarcascade_frontface.xml')  # data provided from open cv
+            os.getcwd()+'/haarcascade_frontface.xml')  # data provided from open cv
         gray = cv2.cvtColor(np.uint8(img), cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(
             gray, 1.3, 5)  # detecting face from received img
-        print(faces)
+        
+        fail = 0
+        
+        # print(type(faces))
         if hasattr(faces, 'shape'):
             for (x, y, w, h) in faces:
                 cropimg = img[y:y+h, x:x+w]
@@ -100,8 +106,15 @@ class DataGenerator(keras.utils.Sequence):
             for i in range(y, y+h):
                 for j in range(x, x+w):
                     for k in range(3):
-                        img[i, j, k] = blur[i-y, j-x, k]
-
+                        try:
+                            img[i, j, k] = blur[i-y, j-x, k]
+                        except:
+                            # print("fail")
+                            fail += 1
+                            continue
+        
+        if fail != 0:
+            print(fail)
         return img
 
 
