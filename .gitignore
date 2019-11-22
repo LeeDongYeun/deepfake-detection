@@ -11,3 +11,5 @@
 *.zip
 .vscode
 sample/*
+*.jpg
+events.*

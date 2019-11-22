@@ -1,13 +1,13 @@
-from preprocessing import DataGenerator
-from callbacks import RedirectModel
-import models
-import os
-import sys
-import argparse
-import keras
 import tensorflow as tf
+import keras
+import argparse
+import sys
+import os
 
 sys.path.append("..")
+from callbacks import RedirectModel
+from preprocessing import DataGenerator
+import models
 
 
 def makedirs(path):
@@ -119,7 +119,7 @@ def create_generators(args):
     if args.dataset_type == 'csv':
         train_generator = DataGenerator(
             args.annotations,
-            shuffle=True
+            shuffle=True,
             # args.classes,
             # transform_generator=transform_generator,
             ** common_args
