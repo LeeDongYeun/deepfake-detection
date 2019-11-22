@@ -36,9 +36,7 @@ class DataGenerator(keras.utils.Sequence):
         varied_X = []
         varied_Y = []
         for i, x in enumerate(X):
-            varied_X.append(x)
-            varied_Y.append(Y[i])
-            '''
+            
             rand = random.random()
             if rand > 0.5:
                 varied_X.append(x)
@@ -50,7 +48,6 @@ class DataGenerator(keras.utils.Sequence):
                 else:
                     varied_X.append(x)
                     varied_Y.append(Y[i])
-            '''
 
         return np.array(varied_X), np.array(varied_Y)
 
@@ -65,6 +62,8 @@ class DataGenerator(keras.utils.Sequence):
         for path in path_list:
             img = load_img(path)
             d = img_to_array(img)
+            d = cv2.resize(d, dsize=(256,256))
+
             data.append(d)
 
         return data
@@ -89,7 +88,7 @@ class DataGenerator(keras.utils.Sequence):
         
         fail = 0
         
-        print(type(faces))
+        # print(type(faces))
         if hasattr(faces, 'shape'):
             for (x, y, w, h) in faces:
                 cropimg = img[y:y+h, x:x+w]
@@ -110,10 +109,12 @@ class DataGenerator(keras.utils.Sequence):
                         try:
                             img[i, j, k] = blur[i-y, j-x, k]
                         except:
-                            print("fail")
+                            # print("fail")
                             fail += 1
                             continue
-
+        
+        if fail != 0:
+            print(fail)
         return img
 
 

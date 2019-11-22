@@ -1,14 +1,10 @@
-
 *.iml
-*.xml
-*.xml
-*.xml
-.idea/vcs.xml
+.idea/
 *.pyc
-
-/presentation/*
 *.csv
 *.zip
 .vscode
 sample/*
 *.DESKTOP-VH2ET7P
+*.jpg
+*.DESKTOP-1VR7V0I
