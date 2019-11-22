@@ -63,18 +63,18 @@ def create_callbacks(model, args):
         callbacks.append(tensorboard_callback)
 
     # save the model
-    # if args.snapshots:
-    #     # ensure directory created first; otherwise h5py will error after epoch.
-    #     makedirs(args.snapshot_path)
-    #     checkpoint = keras.callbacks.ModelCheckpoint(
-    #         os.path.join(
-    #             args.snapshot_path,
-    #             '{backbone}_{dataset_type}_{{epoch:02d}}.h5'.format(backbone=args.backbone, dataset_type=args.dataset_type)
-    #         ),
-    #         verbose=1
-    #     )
-    #     checkpoint = RedirectModel(checkpoint, model)
-    #     callbacks.append(checkpoint)
+    if args.snapshots:
+        # ensure directory created first; otherwise h5py will error after epoch.
+        makedirs(args.snapshot_path)
+        checkpoint = keras.callbacks.ModelCheckpoint(
+            os.path.join(
+                args.snapshot_path,
+                '{backbone}_{dataset_type}_{{epoch:02d}}.h5'.format(backbone=args.backbone, dataset_type=args.dataset_type)
+            ),
+            verbose=1
+        )
+        checkpoint = RedirectModel(checkpoint, model)
+        callbacks.append(checkpoint)
 
     callbacks.append(keras.callbacks.ReduceLROnPlateau(
         monitor='loss',
@@ -165,9 +165,9 @@ def parse_args(args):
     parser.add_argument('--epochs', help='Number of epochs to train.', type=int, default=50)
     parser.add_argument('--steps', help='Number of steps per epoch.', type=int, default=1000)
     parser.add_argument('--lr', help='Learning rate.', type=float, default=1e-4)
-    # parser.add_argument('--snapshot-path', help='Path to store snapshots of models during training (defaults to \'./snapshots\')', default='./snapshots')
-    parser.add_argument(
-        '--tensorboard-dir', help='Log directory for Tensorboard output', default='./logs')
+    parser.add_argument('--snapshot-path', help='Path to store snapshots of models during training (defaults to \'./snapshots\')', default='./snapshots')
+    parser.add_argument('--tensorboard-dir', help='Log directory for Tensorboard output', default='./logs')
+    parser.add_argument('--no-snapshots', help='Disable saving snapshots.', dest='snapshots', action='store_false')
     # parser.add_argument('--random-transform', help='Randomly transform image and annotations.', action='store_true')
     parser.add_argument(
         '--image-min-side', help='Rescale the image so the smallest side is min_side.', type=int, default=320)
@@ -204,8 +204,7 @@ def main(args=None):
     else:
         print('Creating model, this may take a second...')
         model = models.create_model(args.model)
-        model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.adam(
-            lr=args.lr, clipnorm=0.001))
+        model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.adam(lr=args.lr, clipnorm=0.001), metrics=['accuracy'])
 
     print(model.summary())
 
