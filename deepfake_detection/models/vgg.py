@@ -18,9 +18,9 @@ def vgg(backbone='vgg16', inputs=None, modifier=None, **kwargs):
 
     # create the vgg backbone
     if backbone == 'vgg16':
-        vgg = VGG16(input_tensor=inputs, include_top=False, weights=None)
+        vgg = VGG16(input_tensor=inputs, include_top=False, weights=None, classes=1)
     elif backbone == 'vgg19':
-        vgg = VGG19(input_tensor=inputs, include_top=False, weights=None)
+        vgg = VGG19(input_tensor=inputs, include_top=False, weights=None, classes=1)
     else:
         raise ValueError("Backbone '{}' not recognized.".format(backbone))
 
