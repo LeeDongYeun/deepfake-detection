@@ -120,6 +120,7 @@ def create_generators(args):
         train_generator = DataGenerator(
             args.annotations,
             shuffle=True,
+            is_train=True,
             # args.classes,
             # transform_generator=transform_generator,
             **common_args
