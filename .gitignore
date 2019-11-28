@@ -11,3 +11,4 @@ events.*
 *.jpg
 *.DESKTOP-1VR7V0I
 data/*
+deepfake_detection/bin/snapshots/*
