@@ -5,10 +5,9 @@ import random
 import argparse
 import csv
 
-def to_csv(path, csv_path):
-    csvFile = open(csv_path, 'w', newline='', encoding='utf-8')
-    wr = csv.writer(csvFile)
+def to_csv(path, filename, ratio):
     paths = os.listdir(path)
+    all_path = []
 
     for p in paths:
         if p == 'real':
@@ -24,12 +23,31 @@ def to_csv(path, csv_path):
 
             for img in imgs:
                 abs_img = abs_video + img
-                wr.writerow([abs_img, label])
+                all_path.append([abs_img, label])
     
-    csvFile.close()
+    random.shuffle(all_path)
+    thresh = int(len(all_path)*ratio)
+    
+    train = []
+    val = []
+
+    for i, p in enumerate(all_path):
+        if i < thresh:
+            train.append(p)
+        else:
+            val.append(p)
+    
+    train = pd.DataFrame(train)
+    val = pd.DataFrame(val)
+    train = train.reset_index(drop=True)
+    val = val.reset_index(drop=True)
+
+    train.to_csv('{}_train.csv'.format(filename), index=False, header=False)
+    val.to_csv('{}_val.csv'.format(filename), index=False, header=False)
+
 
 def main(args):
-    to_csv(args.dir, args.filename)
+    to_csv(args.dir, args.filename, args.ratio)
 
 
 if __name__ == '__main__':
@@ -41,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ratio', help='train, validation dataset split ratio', type=float, default=0.8)
     parser.add_argument(
-        '--filename', help='csv file name', default='UADFV_dataset.csv')
+        '--filename', help='csv file name', default='UADFV')
 
     args = parser.parse_args()
 
