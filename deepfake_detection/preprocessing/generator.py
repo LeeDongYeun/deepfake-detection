@@ -23,6 +23,7 @@ class DataGenerator(keras.utils.Sequence):
         self.batch_size = kwargs['batch_size']
         self.csv_path = csv_path
         self.data, self.label = self._read_csv(self.csv_path)
+        self.is_train = is_train
 
     def __len__(self):
         'Denotes the number of batches per epoch'

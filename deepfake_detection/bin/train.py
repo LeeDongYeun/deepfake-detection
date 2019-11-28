@@ -125,18 +125,21 @@ def create_generators(args):
             # transform_generator=transform_generator,
             **common_args
         )
-        # validation_generator = generator(
-        #     args.annotations,
-        #     args.classes,
-        #     shuffle_groups=False,
-        #     **common_args
-        # )
+        if args.val_annotations:
+            validation_generator = DataGenerator(
+                args.val_annotations,
+                shuffle=True,
+                is_train=False,
+                **common_args
+            )
+        else:
+            validation_generator = None
     else:
         raise ValueError(
             'Invalid data type received: {}'.format(args.dataset_type))
 
-    # return train_generator, validation_generator
-    return train_generator
+    return train_generator, validation_generator
+    # return train_generator
 
 
 def parse_args(args):
@@ -151,7 +154,7 @@ def parse_args(args):
 
     csv_parser = subparsers.add_parser('csv')
     csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for training.')
-    csv_parser.add_argument('val-annotations', help='Path to CSV file containing annotations for validation (optional).')
+    csv_parser.add_argument('--val-annotations', help='Path to CSV file containing annotations for validation (optional).')
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--snapshot', help='Resume training from a snapshot.')
@@ -159,12 +162,12 @@ def parse_args(args):
     group.add_argument('--weights', help='Initialize the model with weights from a file.')
 
     parser.add_argument('--model', help='Backbone model used by retinanet.', default='resnet50', type=str)
-    parser.add_argument('--batch-size', help='Size of the batches.', default=3, type=int)
+    parser.add_argument('--batch-size', help='Size of the batches.', default=6, type=int)
     parser.add_argument('--gpu', help='Id of the GPU to use (as reported by nvidia-smi).')
     parser.add_argument('--multi-gpu', help='Number of GPUs to use for parallel processing.', type=int, default=0)
     parser.add_argument('--multi-gpu-force', help='Extra flag needed to enable (experimental) multi-gpu support.', action='store_true')
     parser.add_argument('--epochs', help='Number of epochs to train.', type=int, default=50)
-    parser.add_argument('--steps', help='Number of steps per epoch.', type=int, default=1000)
+    parser.add_argument('--steps', help='Number of steps per epoch.', type=int, default=2000)
     parser.add_argument('--lr', help='Learning rate.', type=float, default=1e-4)
     parser.add_argument('--snapshot-path', help='Path to store snapshots of models during training (defaults to \'./snapshots\')', default='./snapshots')
     parser.add_argument('--tensorboard-dir', help='Log directory for Tensorboard output', default='./logs')
@@ -197,7 +200,7 @@ def main(args=None):
 
     # create the generators
     # train_generator, validation_generator = create_generators(args)
-    train_generator = create_generators(args)
+    train_generator, validation_generator = create_generators(args)
 
     if args.snapshot is not None:
         print('Loading model, this may take a second...')
@@ -214,6 +217,7 @@ def main(args=None):
 
     return model.fit_generator(
         generator=train_generator,
+        validation_data=validation_generator,
         steps_per_epoch=args.steps,
         epochs=args.epochs,
         verbose=1,
