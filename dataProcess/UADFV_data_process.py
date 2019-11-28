@@ -15,10 +15,10 @@ def to_csv(path, filename, ratio):
         else:
             label = 0
         
-        abs_p = path + '/' + p + '/'
+        abs_p = os.path.abspath(p)
         videos = os.listdir(abs_p)
         for video in videos:
-            abs_video = abs_p + video + '/'
+            abs_video = os.path.abspath(video)
             imgs = os.listdir(abs_video)
 
             for img in imgs:
