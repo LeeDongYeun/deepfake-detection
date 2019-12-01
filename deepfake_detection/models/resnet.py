@@ -1,5 +1,6 @@
 import keras
 from keras.applications.resnet50 import ResNet50
+
 from keras.layers import Dense, Conv2D, BatchNormalization, Activation
 from keras.layers import AveragePooling2D, Input, Flatten
 from keras.models import Model
@@ -25,20 +26,20 @@ def resnet(backbone='resnet50', inputs=None, modifier=None, **kwargs):
     # choose default input
     if inputs is None:
         if keras.backend.image_data_format() == 'channels_first':
-            inputs = keras.layers.Input(shape=(3, 218, 178))
+            inputs = keras.layers.Input(shape=(3, 256, 256))
         else:
-            inputs = keras.layers.Input(shape=(218, 178, 3))
+            inputs = keras.layers.Input(shape=(256, 256, 3))
 
     # create the resnet backbone
     if backbone == 'resnet50':
-        resnet = ResNet50(include_top=False, input_tensor=inputs)
+        resnet = ResNet50(include_top=False, weights='imagenet', input_tensor=inputs, classes=1)
         print(resnet.output)
         # resnet = keras_resnet.models.ResNet50(inputs, include_top=False, freeze_bn=True)
-    elif backbone == 'resnet101':
-        resnet = ResNet101(include_top=False, input_tensor=inputs)
+    # elif backbone == 'resnet101':
+        # resnet = ResNet101(include_top=False, weights='imagenet', input_tensor=inputs, classes=1)
         # resnet = keras_resnet.models.ResNet101(inputs, include_top=False, freeze_bn=True)
-    elif backbone == 'resnet152':
-        resnet = ResNet152(include_top=False, input_tensor=inputs)
+    # elif backbone == 'resnet152':
+        # resnet = ResNet152(include_top=False, weights='imagenet', input_tensor=inputs, classes=1)
         # resnet = keras_resnet.models.ResNet152(inputs, include_top=False, freeze_bn=True)
     else:
         raise ValueError('Backbone (\'{}\') is invalid.'.format(backbone))
@@ -51,7 +52,7 @@ def resnet(backbone='resnet50', inputs=None, modifier=None, **kwargs):
     resnet = AveragePooling2D(pool_size=8)(x)
     resnet = Flatten()(resnet)
 
-    outputs = Dense(1, activation='softmax', kernel_initializer='he_normal')(resnet)
+    outputs = Dense(1, activation='sigmoid', kernel_initializer='he_normal')(resnet)
     model = Model(inputs=inputs, outputs=outputs)
 
     # create the full model
