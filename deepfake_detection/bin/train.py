@@ -162,7 +162,7 @@ def parse_args(args):
     group.add_argument('--weights', help='Initialize the model with weights from a file.')
 
     parser.add_argument('--model', help='Backbone model used by retinanet.', default='resnet50', type=str)
-    parser.add_argument('--batch-size', help='Size of the batches.', default=6, type=int)
+    parser.add_argument('--batch-size', help='Size of the batches.', default=8, type=int)
     parser.add_argument('--gpu', help='Id of the GPU to use (as reported by nvidia-smi).')
     parser.add_argument('--multi-gpu', help='Number of GPUs to use for parallel processing.', type=int, default=0)
     parser.add_argument('--multi-gpu-force', help='Extra flag needed to enable (experimental) multi-gpu support.', action='store_true')
