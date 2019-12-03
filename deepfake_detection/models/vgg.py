@@ -31,12 +31,13 @@ def vgg(backbone='vgg16', inputs=None, modifier=None, **kwargs):
 
     if modifier:
         vgg = modifier(vgg)
-    x = vgg.output
+    x = vgg.get_layer('block5_conv4').output
 
-    vgg = AveragePooling2D(pool_size=8)(x)
-    vgg = Flatten()(vgg)
+    vgg = Flatten(name='flatten')(x)
+    vgg = Dense(4096, activation='relu', name='fc1')(vgg)
+    vgg = Dense(4096, activation='relu', name='fc1')(vgg)
 
-    outputs = Dense(1, activation='sigmoid', kernel_initializer='he_normal')(vgg)
+    outputs = Dense(1, activation='sigmoid', name='predictions')(vgg)
     model = Model(inputs=inputs, outputs=outputs)
 
     # create the full model
