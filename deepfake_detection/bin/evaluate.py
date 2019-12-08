@@ -94,7 +94,10 @@ def main(args=None):
 
     print(model.summary())
 
-    return model.evaluate_generator(validation_generator)
+    scores = model.evaluate_generator(validation_generator)
+    print("%s: %.2f%%" %(model.metrics_names[1], scores[1]*100))
+
+    return scores
 
 
 if __name__ == '__main__':
