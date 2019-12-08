@@ -1,5 +1,5 @@
 const BASE_URL = "https://api.unsplash.com/"
-const TOKEN = "14e63ad7ee94cc5f53e91353fd72a1f50588feb2c7c6c95e87f08035eb139a57"
+const TOKEN = "YOUR_TOKEN"
 const fetch = require("node-fetch")
 const fs = require("fs")
 var links = []
