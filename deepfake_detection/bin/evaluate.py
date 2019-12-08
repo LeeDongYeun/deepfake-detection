@@ -7,8 +7,8 @@ import os
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-    import keras_m2det.bin  # noqa: F401
-    __package__ = "keras_m2det.bin"
+    import deepfake_detection.bin  # noqa: F401
+    __package__ = "deepfake_detection.bin"
 
 from ..callbacks import RedirectModel
 from ..preprocessing import DataGenerator
@@ -62,10 +62,10 @@ def parse_args(args):
     csv_parser = subparsers.add_parser('csv')
     csv_parser.add_argument('annotations', help='Path to CSV file containing annotations for training.')
 
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('weights', help='Path to evaluate model weight.')
+    # group = parser.add_mutually_exclusive_group()
+    parser.add_argument('weights', help='Path to evaluate model weight.')
     parser.add_argument('--model', help='Model name.', default='resnet50', type=str)
-    parser.add_argument('--batch-size', help='Size of the batches.', default=8, type=int)    
+    parser.add_argument('--batch-size', help='Size of the batches.', default=16, type=int)    
     parser.add_argument('--gpu', help='Id of the GPU to use (as reported by nvidia-smi).')
     parser.add_argument('--multi-gpu', help='Number of GPUs to use for parallel processing.', type=int, default=0)
     parser.add_argument('--multi-gpu-force', help='Extra flag needed to enable (experimental) multi-gpu support.', action='store_true')
