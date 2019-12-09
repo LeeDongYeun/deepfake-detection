@@ -34,26 +34,8 @@ class DataGenerator(keras.utils.Sequence):
         X = self.data[index*self.batch_size:(index+1)*self.batch_size]
         X = self._convert_img(X)
         Y = self.label[index*self.batch_size:(index+1)*self.batch_size]
-        if self.is_train:
-            varied_X = []
-            varied_Y = []
-            for i, x in enumerate(X):
-                rand = random.random()
-                if rand > 0.5:
-                    varied_X.append(x)
-                    varied_Y.append(Y[i])
-                else:
-                    if Y[i] == 0:
-                        varied_X.append(x)
-                        varied_Y.append(Y[i])
-                    else:
-                        varied_X.append(self._transform_function(x))
-                        varied_Y.append(1)
-        else:
-            varied_X = X
-            varied_Y = Y
 
-        return np.array(varied_X), np.array(varied_Y)
+        return np.array(X), np.array(Y)
 
     def on_epoch_end(self):
         self.indexes = np.arange(len(self.data))

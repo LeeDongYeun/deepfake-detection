@@ -86,7 +86,6 @@ def main(args=None):
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     keras.backend.tensorflow_backend.set_session(get_session())
 
-
     validation_generator = create_generators(args)
     
     print('Loading model, this may take a second...')
