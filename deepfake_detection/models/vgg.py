@@ -40,5 +40,4 @@ def vgg(backbone='vgg16', inputs=None, modifier=None, **kwargs):
     model = Model(inputs=inputs, outputs=outputs)
 
     # create the full model
-
     return model
