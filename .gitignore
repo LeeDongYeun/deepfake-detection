@@ -12,3 +12,7 @@ events.*
 *.DESKTOP-1VR7V0I
 data/*
 deepfake_detection/bin/snapshots/*
+deepfake_detection/bin/resnet1_snapshots/*
+deepfake_detection/bin/resnet50_snapshots/*
+*.log
+*.out

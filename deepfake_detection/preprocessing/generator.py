@@ -17,12 +17,13 @@ import cv2
 class DataGenerator(keras.utils.Sequence):
     'Generates data for Keras'
 
-    def __init__(self, csv_path, shuffle, **kwargs):
+    def __init__(self, csv_path, shuffle, is_train, **kwargs):
         super(DataGenerator, self).__init__()
         self.shuffle = shuffle
         self.batch_size = kwargs['batch_size']
         self.csv_path = csv_path
         self.data, self.label = self._read_csv(self.csv_path)
+        self.is_train = is_train
 
     def __len__(self):
         'Denotes the number of batches per epoch'
@@ -33,21 +34,24 @@ class DataGenerator(keras.utils.Sequence):
         X = self.data[index*self.batch_size:(index+1)*self.batch_size]
         X = self._convert_img(X)
         Y = self.label[index*self.batch_size:(index+1)*self.batch_size]
-        varied_X = []
-        varied_Y = []
-        for i, x in enumerate(X):
-            
-            rand = random.random()
-            if rand > 0.5:
-                varied_X.append(x)
-                varied_Y.append(Y[i])
-            else:
-                if Y[i] == 0:
+        if self.is_train:
+            varied_X = []
+            varied_Y = []
+            for i, x in enumerate(X):
+                rand = random.random()
+                if rand > 0.5:
                     varied_X.append(x)
                     varied_Y.append(Y[i])
                 else:
-                    varied_X.append(self._transform_function(x))
-                    varied_Y.append(1)
+                    if Y[i] == 0:
+                        varied_X.append(x)
+                        varied_Y.append(Y[i])
+                    else:
+                        varied_X.append(self._transform_function(x))
+                        varied_Y.append(1)
+        else:
+            varied_X = X
+            varied_Y = Y
 
         return np.array(varied_X), np.array(varied_Y)
 
