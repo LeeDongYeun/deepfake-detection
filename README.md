@@ -206,7 +206,7 @@ To make csv file, run this command.
     
               alimg = cv2.resize(cropimg, dsize=(0, 0), fx=fx,
                                  fy=fy, interpolation=cv2.INTER_LINEAR)
-              temp = cv2.GaussianBlur(alimg, (5, 5), 0)  # 얼굴부분 추출해서 Gaussian Blur
+              temp = cv2.GaussianBlur(alimg, (5, 5), 0)  # Gaussian Blur on face
               blur = cv2.resize(temp, dsize=(0, 0), fx=1/fx, fy=1/fy,
                                 interpolation=cv2.INTER_LINEAR)
     
