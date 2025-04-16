@@ -1,7 +1,5 @@
 # Deepfake-detection
 
-> KAIST 2019 Fall, CS489 final project
-
 # Table of Contents
 
 - Introduction
